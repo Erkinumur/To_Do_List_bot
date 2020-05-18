@@ -32,6 +32,9 @@ def selector(message):
         clear_list(message)
     elif text == '🔚 Выйти':
         end(message)
+    else:
+        bot.send_message(message.chat.id, 'Я не смог распознать команду. Попробуйте еще раз.\nВыберите действие:')
+        bot.register_next_step_handler(message, selector)
 
 def show_list(message):
     try:
@@ -53,6 +56,7 @@ def show_list(message):
                 result += f'{num}. {i}\n'
                 num += 1
             bot.send_message(chat_id, result, reply_markup=markup)
+            
         else:
             bot.send_message(chat_id, 'Вы еще не добавили ни одного пункта', reply_markup=markup_menu)
             bot.register_next_step_handler(message, selector)
@@ -181,6 +185,11 @@ def delete_task(message):
 
 def end(message):
     bot.send_message(message.chat.id, 'До свидания.\nДля возврата наберите "/start"')
+
+# @bot.message_handler(content_types=['text'])
+# def unknown_comand(message):
+#     bot.send_message(message.chat.id, 'Я не смог распознать команду. Попробуйте еще раз.\nВыберите действие:', reply_markup=markup_menu)
+#     bot.register_next_step_handler(message, selector)
 
 
 
