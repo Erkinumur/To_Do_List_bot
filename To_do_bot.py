@@ -1,6 +1,8 @@
+
 import telebot
 from telebot import types
 import json
+
 
 token = "1165336826:AAHB5Rd9KT3B4lzepQFhwC7TbRkjyQ-0P68"
 bot = telebot.TeleBot(token)
@@ -57,8 +59,9 @@ def show_list(message):
             
             
     except Exception as e:
-        print(e)
-        bot.reply_to(message, text="oops")
+        print('show list: ', e)
+        bot.send_message(message.chat.id, 'Упс. Что то пошло не так. Попробуйте еще раз.', reply_markup=markup_menu)
+        bot.register_next_step_handler(message, selector)
 
 
 def add_assignment(message):
@@ -67,28 +70,37 @@ def add_assignment(message):
     bot.register_next_step_handler(message, reply)
 
 def reply(message):
-    with open('todolist.json', "r") as f:
-        data = json.load(f)
-        user_id = str(message.from_user.id)
-        if user_id in data['users']:
-            data['users'][user_id].append(message.text)
-        else:
-            data['users'][user_id] = [message.text]
-    with open('todolist.json', 'w') as f:
-        json.dump(data, f, indent=4)
-    bot.send_message(message.chat.id, 'Пункт добавлен', reply_markup=markup_menu)
-    bot.register_next_step_handler(message, selector)
+    try:  
+        with open('todolist.json', "r") as f:
+            data = json.load(f)
+            user_id = str(message.from_user.id)
+            if user_id in data['users']:
+                data['users'][user_id].append(message.text)
+            else:
+                data['users'][user_id] = [message.text]
+        with open('todolist.json', 'w') as f:
+            json.dump(data, f, indent=4)
+        bot.send_message(message.chat.id, 'Пункт добавлен', reply_markup=markup_menu)
+        bot.register_next_step_handler(message, selector)
+    except Exception as e:
+        print('reply: ', e)
+        bot.send_message(message.chat.id, 'Упс. Что то пошло не так. Попробуйте еще раз.', reply_markup=markup_menu)
+        bot.register_next_step_handler(message, selector)
 
 
 
 def clear_list(message):
-    chat_id = message.chat.id
-    markup = types.InlineKeyboardMarkup()
-    btn_yes = types.InlineKeyboardButton('Да', callback_data='yes')
-    btn_no = types.InlineKeyboardButton('Нет', callback_data='no')
-    markup.add(btn_yes, btn_no)
-    bot.send_message(chat_id, text="Уверены что хотите очистить список?", reply_markup=markup)
-    # bot.register_next_step_handler(message, clear)
+    try:
+        chat_id = message.chat.id
+        markup = types.InlineKeyboardMarkup()
+        btn_yes = types.InlineKeyboardButton('Да', callback_data='yes')
+        btn_no = types.InlineKeyboardButton('Нет', callback_data='no')
+        markup.add(btn_yes, btn_no)
+        bot.send_message(chat_id, text="Уверены что хотите очистить список?", reply_markup=markup)
+    except Exception as e:
+        print('clear list: ', e)
+        bot.send_message(message.chat.id, 'Упс. Что то пошло не так. Попробуйте еще раз.', reply_markup=markup_menu)
+        bot.register_next_step_handler(message, selector)
 
 @bot.callback_query_handler(func=lambda call:True)
 def calls(call):
@@ -132,27 +144,40 @@ def update_list(message):
     bot.register_next_step_handler(message, update_list2)
 
 def update_list2(message):
-    with open('todolist.json', "r") as f:
-        data = json.load(f)
-        user_id = str(message.from_user.id)
-    data['users'][user_id][update-1] = message.text
-    with open('todolist.json', 'w') as f:
-        json.dump(data, f, indent=4) 
-    bot.send_message(message.chat.id, 'Изменения внесены', reply_markup=markup_menu)
-    bot.register_next_step_handler(message, selector)
+    try:
+        with open('todolist.json', "r") as f:
+            data = json.load(f)
+            user_id = str(message.from_user.id)
+        data['users'][user_id][update-1] = message.text
+        with open('todolist.json', 'w') as f:
+            json.dump(data, f, indent=4) 
+        bot.send_message(message.chat.id, 'Изменения внесены', reply_markup=markup_menu)
+        bot.register_next_step_handler(message, selector)
+    except Exception as e:
+        print('update list: ', e)
+        bot.send_message(message.chat.id, 'Упс. Что то пошло не так. Попробуйте еще раз.', reply_markup=markup_menu)
+        bot.register_next_step_handler(message, selector)
 
 delete_num = 0
 def delete_task(message):
-    global delete_num
-    delete_num = int(message.text)
-    with open('todolist.json', "r") as f:
-        data = json.load(f)
-        user_id = str(message.from_user.id)
-    data['users'][user_id].pop(delete_num-1)
-    with open('todolist.json', 'w') as f:
-        json.dump(data, f, indent=4) 
-    bot.send_message(message.chat.id, 'Изменения внесены', reply_markup=markup_menu)
-    bot.register_next_step_handler(message, selector)
+    try:
+        global delete_num
+        delete_num = int(message.text)
+        with open('todolist.json', "r") as f:
+            data = json.load(f)
+            user_id = str(message.from_user.id)
+        if len(data['users'][user_id]) > 1:
+            data['users'][user_id].pop(delete_num-1)
+        else:
+            data['users'].pop(user_id)
+        with open('todolist.json', 'w') as f:
+            json.dump(data, f, indent=4) 
+        bot.send_message(message.chat.id, 'Изменения внесены', reply_markup=markup_menu)
+        bot.register_next_step_handler(message, selector)
+    except Exception as e:
+        print('delete task: ', e)
+        bot.send_message(message.chat.id, 'Упс. Что то пошло не так. Попробуйте еще раз.')
+
 
 def end(message):
     bot.send_message(message.chat.id, 'До свидания.\nДля возврата наберите "/start"')
@@ -160,3 +185,4 @@ def end(message):
 
 
 bot.polling(none_stop=True)
+
